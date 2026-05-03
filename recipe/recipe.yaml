@@ -1,5 +1,5 @@
 context:
-  version: 0.19.1
+  version: 0.20.0
   build_number: 0
   use_cuda: ${{ cuda_compiler_version != "None" }}
   pytorch_version: 2.10.0
@@ -14,7 +14,7 @@ package:
 
 source:
   - url: https://pypi.org/packages/source/v/vllm/vllm-${{ version }}.tar.gz
-    sha256: 9fb88ce6b50991eba41d183584f65f51d7f6015d86a42cdabf79c1c8bd5d66fa
+    sha256: a6d50152936ee292455af3ffbe359f7a284ac43bf3b68caccf29f368e196cc72
     patches:
       - patches/0001-Search-for-the-CUDA-package-in-CMakeLists.patch
       - patches/0002-Remove-ninja-pip-requirement.patch
@@ -50,14 +50,14 @@ build:
       then:
         - export TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
         # Building vLLM is memory-intensive: see https://github.com/Dao-AILab/flash-attention/issues/1043#issuecomment-2770635000
-        - export MAX_JOBS=3
+        - export MAX_JOBS=8
         # Override the CUDA architectures configured in the conda-forge nvcc package: https://github.com/conda-forge/cuda-nvcc-feedstock/blob/7843e9f1b9ea6bc555cd70c247d774189fc34110/recipe/conda_build_config.yaml#L21-L28
-        - export CUDAARCHS="70-real;80-real;86-real;89-real;90a-real;100f-real;120a-real"
-        - export TORCH_CUDA_ARCH_LIST="7.0;8.0;8.6;8.9;9.0;10.0;12.0+PTX"
+        - export CUDAARCHS="110-real"
+        - export TORCH_CUDA_ARCH_LIST="11.0"
         # not usable with pytorch: https://github.com/pytorch/pytorch/issues/172034
-        - export CMAKE_CUDA_ARCHITECTURES="70;80;86;89;90;100;120"
+        - export CMAKE_CUDA_ARCHITECTURES="110"
         # for vendored cutlass, see https://github.com/NVIDIA/cutlass/blob/v4.0.0/CMakeLists.txt
-        - export CUTLASS_NVCC_ARCHS="70;80;86;89;90;100;120"
+        - export CUTLASS_NVCC_ARCHS="110"
     # ACL (Arm Compute Library) is not packaged in conda-forge; skip it
     - if: aarch64
       then:
@@ -67,8 +67,8 @@ build:
       then:
         - export CMAKE_ARGS="$CMAKE_ARGS -DPython_INCLUDE_DIR="$(python -c 'import sysconfig; print(sysconfig.get_path("include"))')""
     # ensure we don't use the default CMAKE_BUILD_TYPE=RelWithDebInfo, see
-    # https://github.com/vllm-project/vllm/blob/v0.19.1/setup.py#L147
-    # https://github.com/vllm-project/vllm/blob/v0.19.1/vllm/envs.py#L268
+    # https://github.com/vllm-project/vllm/blob/v0.20.0/setup.py#L147
+    # https://github.com/vllm-project/vllm/blob/v0.20.0/vllm/envs.py#L268
     - export CMAKE_BUILD_TYPE=Release
     - ${{ PYTHON }} -m pip install . -vv --no-build-isolation --no-deps
 
@@ -81,7 +81,7 @@ build:
     - osx and x86_64
     # CUDA builds require Python 3.11+ (some CUDA-only deps dropped 3.10 support)
     - match(python, "<3.11") and cuda_compiler_version != "None"
-    - aarch64 and use_cuda  # Still have issues locating CUDA for the aarch64 build
+    #- aarch64 and use_cuda  # Still have issues locating CUDA for the aarch64 build
     # - not use_cuda  # Just build CUDA for now
     # - match(python, "!=3.10")  # Until all the builds succeed
     # See XXX on why we need this skip to distinguish runners for GPU builds vs CPU builds

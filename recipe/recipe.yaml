@@ -1,5 +1,5 @@
 context:
-  version: 0.20.1
+  version: 0.21.0
   build_number: 0
   use_cuda: ${{ cuda_compiler_version != "None" }}
   pytorch_version: 2.10.0
@@ -14,7 +14,7 @@ package:
 
 source:
   - url: https://pypi.org/packages/source/v/vllm/vllm-${{ version }}.tar.gz
-    sha256: 778df065237704d51e8b4cc95bcc6f6a0c2317f13feb38295de3ce76146bf140
+    sha256: 05ff89c3e926b88b77d7878e317a659ffba678afc21c1d48952037aa5457f058
     patches:
       - patches/0001-Search-for-the-CUDA-package-in-CMakeLists.patch
       - patches/0002-Remove-ninja-pip-requirement.patch
@@ -23,7 +23,10 @@ source:
           - patches/0005-Configure-build-to-target-aarch64-even-though-CMake-.patch
       - patches/0007-pass-required-CUTLASS_NVCC_ARCHS-through-to-cutlass.patch
       - patches/0008-Make-model-hosting-container-standards-optional.patch
-      - patches/0009-Fall-back-to-PREFIX-lib-for-libgomp-when-not-bundled.patch
+      - if: version < "0.21.0"
+        then: patches/0009-Fall-back-to-PREFIX-lib-for-libgomp-when-not-bundled.patch
+      - if: version >= "0.21.0"
+        then: patches/0013-Fall-back-to-PREFIX-lib-for-libgomp-when-not-bundled.patch
       - patches/0010-Allow-skipping-ACL-via-VLLM_SKIP_ACL-env-var.patch
   # Needs to be vendored because vLLM uses a modified version of the flash attention primitives that supports KV-caching.
   # see https://github.com/vllm-project/vllm/blob/v{{ version }}/cmake/external_projects/vllm_flash_attn.cmake#L41
@@ -67,8 +70,8 @@ build:
       then:
         - export CMAKE_ARGS="$CMAKE_ARGS -DPython_INCLUDE_DIR="$(python -c 'import sysconfig; print(sysconfig.get_path("include"))')""
     # ensure we don't use the default CMAKE_BUILD_TYPE=RelWithDebInfo, see
-    # https://github.com/vllm-project/vllm/blob/v0.20.1/setup.py#L147
-    # https://github.com/vllm-project/vllm/blob/v0.20.1/vllm/envs.py#L268
+    # https://github.com/vllm-project/vllm/blob/v0.21.0/setup.py#L147
+    # https://github.com/vllm-project/vllm/blob/v0.21.0/vllm/envs.py#L268
     - export CMAKE_BUILD_TYPE=Release
     - ${{ PYTHON }} -m pip install . -vv --no-build-isolation --no-deps
 

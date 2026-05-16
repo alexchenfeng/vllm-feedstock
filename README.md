@@ -1,5 +1,7 @@
-About vllm-feedstock
+About vllm-feedstock (For nv jetson thor)
 ====================
+
+Download conda package from [cineneural-conda-forge-vllm](https://prefix.dev/channels/cineneural-conda-forge/packages/vllm)
 
 Feedstock license: [BSD-3-Clause](https://github.com/conda-forge/vllm-feedstock/blob/main/LICENSE.txt)
 

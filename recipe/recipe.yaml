@@ -1,5 +1,5 @@
 context:
-  version: 0.25.1
+  version: 0.26.0
   build_number: 0
   use_cuda: ${{ cuda_compiler_version != "None" }}
   pytorch_version: 2.11.0
@@ -14,7 +14,7 @@ package:
 
 source:
   - url: https://pypi.org/packages/source/v/vllm/vllm-${{ version }}.tar.gz
-    sha256: ddbdec3f1c0f21afa70b7eb6ddf3faa29d26b1302ee4b5d5e00ec3af41b0c2e4
+    sha256: 23e9fa19d7e20ce7dcc1c074d41503e2116d23f19e688f5d5ea91b741f958502
     patches:
       - patches/0001-Search-for-the-CUDA-package-in-CMakeLists.patch
       - patches/0002-Remove-ninja-pip-requirement.patch
@@ -23,13 +23,13 @@ source:
         then:
           - patches/0005-Configure-build-to-target-aarch64-even-though-CMake-.patch
       - patches/0007-pass-required-CUTLASS_NVCC_ARCHS-through-to-cutlass.patch
-      - if: version < "0.25.1"
+      - if: version < "0.26.0"
         then: patches/0008-Make-model-hosting-container-standards-optional.patch
-      - if: version >= "0.25.1"
+      - if: version >= "0.26.0"
         then: patches/0008-02-Make-model-hosting-container-standards-optional.patch
-      - if: version < "0.25.1"
+      - if: version < "0.26.0"
         then: patches/0009-Fall-back-to-PREFIX-lib-for-libgomp-when-not-bundled.patch
-      - if: version >= "0.25.1"
+      - if: version >= "0.26.0"
         then: patches/0013-Fall-back-to-PREFIX-lib-for-libgomp-when-not-bundled.patch
       - patches/0010-Allow-skipping-ACL-via-VLLM_SKIP_ACL-env-var.patch
   # Needs to be vendored because vLLM uses a modified version of the flash attention primitives that supports KV-caching.
@@ -76,8 +76,8 @@ build:
       then:
         - export CMAKE_ARGS="$CMAKE_ARGS -DPython_INCLUDE_DIR="$(python -c 'import sysconfig; print(sysconfig.get_path("include"))')""
     # ensure we don't use the default CMAKE_BUILD_TYPE=RelWithDebInfo, see
-    # https://github.com/vllm-project/vllm/blob/v0.25.1/setup.py#L147
-    # https://github.com/vllm-project/vllm/blob/v0.25.1/vllm/envs.py#L268
+    # https://github.com/vllm-project/vllm/blob/v0.26.0/setup.py#L147
+    # https://github.com/vllm-project/vllm/blob/v0.26.0/vllm/envs.py#L268
     - export CMAKE_BUILD_TYPE=Release
     - ${{ PYTHON }} -m pip install . -vv --no-build-isolation --no-deps
 
@@ -169,7 +169,7 @@ requirements:
     - llguidance >=1.7.0,<1.8.0
     - lm-format-enforcer ==0.11.3
     - mcp
-    - mistral-common >=1.11.3
+    - mistral-common >=1.11.5
     - msgspec
     - ninja
     - numba ==0.65.0

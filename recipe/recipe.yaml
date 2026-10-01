@@ -1,6 +1,6 @@
 context:
-  version: 0.29.0
-  build_number: 1
+  version: 0.30.0
+  build_number: 0
   use_cuda: ${{ cuda_compiler_version != "None" }}
   pytorch_version: 2.13.0
   vllm_target_device: ${{ "cuda" if use_cuda else "cpu" }}
@@ -14,7 +14,7 @@ package:
 
 source:
   - url: https://pypi.org/packages/source/v/vllm/vllm-${{ version }}.tar.gz
-    sha256: c03feb07943ecae9e69e7dc424d7c5569ecf8d1292513aef2a4de67af381cd97
+    sha256: 5f8f4e890c042ffa1c3e103f81c35e2d96f60a0a175ac43a4adbae7006bef62b
     patches:
       - patches/0001-Search-for-the-CUDA-package-in-CMakeLists.patch
       - patches/0002-Remove-ninja-pip-requirement.patch
@@ -24,19 +24,19 @@ source:
         then:
           - patches/0005-Configure-build-to-target-aarch64-even-though-CMake-.patch
       - patches/0007-pass-required-CUTLASS_NVCC_ARCHS-through-to-cutlass.patch
-      - if: version < "0.29.0"
+      - if: version < "0.30.0"
         then: patches/0008-Make-model-hosting-container-standards-optional.patch
-      - if: version >= "0.29.0"
+      - if: version >= "0.30.0"
         then: patches/0008-02-Make-model-hosting-container-standards-optional.patch
-      - if: version < "0.29.0"
+      - if: version < "0.30.0"
         then: patches/0009-Fall-back-to-PREFIX-lib-for-libgomp-when-not-bundled.patch
-      - if: version >= "0.29.0"
+      - if: version >= "0.30.0"
         then: patches/0013-Fall-back-to-PREFIX-lib-for-libgomp-when-not-bundled.patch
       - patches/0010-Allow-skipping-ACL-via-VLLM_SKIP_ACL-env-var.patch
   # Needs to be vendored because vLLM uses a modified version of the flash attention primitives that supports KV-caching.
   # see https://github.com/vllm-project/vllm/blob/v{{ version }}/cmake/external_projects/vllm_flash_attn.cmake#L41
-  - url: https://github.com/vllm-project/flash-attention/archive/803020a8fa15407871341d41eba4919ade2ee1ee.tar.gz
-    sha256: f7885c9b3735c33c89b886436531379ba8ffc5537ef7dd4b0199fe085049f824
+  - url: https://github.com/vllm-project/flash-attention/archive/28e862d21806bc3580207aa0ad4e2759151e9827.tar.gz
+    sha256: 1d983c59cfd674a654bc6809089302e572a9949c42660733873ab88a17dedc0f
     patches:
       - patches/0014-flash-attention-py314.patch
     target_directory: flash-attention
@@ -77,8 +77,8 @@ build:
       then:
         - export CMAKE_ARGS="$CMAKE_ARGS -DPython_INCLUDE_DIR="$(python -c 'import sysconfig; print(sysconfig.get_path("include"))')""
     # ensure we don't use the default CMAKE_BUILD_TYPE=RelWithDebInfo, see
-    # https://github.com/vllm-project/vllm/blob/v0.29.0/setup.py#L147
-    # https://github.com/vllm-project/vllm/blob/v0.29.0/vllm/envs.py#L268
+    # https://github.com/vllm-project/vllm/blob/v0.30.0/setup.py#L147
+    # https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/envs.py#L268
     - export CMAKE_BUILD_TYPE=Release
     - ${{ PYTHON }} -m pip install . -vv --no-build-isolation --no-deps
 
@@ -217,13 +217,13 @@ requirements:
       then:
         # see https://github.com/vllm-project/vllm/blame/v{{ version }}/requirements/cuda.txt
         - pytorch ==${{ pytorch_version }} [build=cuda*]
-        - torchaudio ==${{ pytorch_version }}
+        - torchaudio ==2.11.0
         - torchvision
       else:
         # see https://github.com/vllm-project/vllm/blame/v{{ version }}/requirements/cpu.txt;
         # some are in common already (py-cpuinfo), some move there because they're in both cpu&cuda (numba)
         - packaging >=24.2
-        - torchaudio
+        - torchaudio ==2.11.0
         - torchvision
   run_constraints:
     # Fixes issue with incompatibility between old `datasets` versions and `pyarrow` v21+
